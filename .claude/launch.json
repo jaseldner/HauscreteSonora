@@ -1,0 +1,32 @@
+﻿{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hauscrete",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["server.mjs"],
+      "port": 3000
+    },
+    {
+      "name": "atelier",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["C:\\Negocios\\Atelier Dos Mares\\CRM Atelier\\server.mjs"],
+      "port": 3100
+    },
+    {
+      "name": "baja",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["C:\\Negocios\\Hauscrete BAJA ERP\\server.mjs"],
+      "port": 3200
+    },
+    {
+      "name": "bucas",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["C:\\Negocios\\Bucas\\Bucas ERP\\server.mjs"],
+      "port": 3300
+    }
+  ]
+}
+
+
+

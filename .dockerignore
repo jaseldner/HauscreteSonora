@@ -1,0 +1,8 @@
+# No meter la base ni respaldos en la imagen (la base va en el disco persistente)
+hauscrete.sqlite
+hauscrete.sqlite-shm
+hauscrete.sqlite-wal
+backups/
+node_modules/
+.claude/
+*.bat

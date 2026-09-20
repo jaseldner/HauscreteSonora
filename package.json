@@ -1,0 +1,18 @@
+{
+  "name": "hauscrete-crm",
+  "version": "1.0.0",
+  "description": "CRM/ERP Hauscrete - servidor local con SQLite (Ruta A)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.mjs",
+    "import": "node import-json.mjs",
+    "backup": "node backup.mjs"
+  },
+  "dependencies": {
+    "@nodecfdi/sat-ws-descarga-masiva": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
