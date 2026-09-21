@@ -585,6 +585,80 @@ const server = http.createServer(async (req, res) => {
       return sendJSON(res, 200, { ok: true });   // Telegram solo necesita 200
     }
 
+    /* ===== RF-637: PROSPECTOS DE REDES SOCIALES (ManyChat) =====
+       El bot de Messenger/Instagram llama aquí con la acción "External Request" de
+       ManyChat cuando ya juntó el nombre y el teléfono. El prospecto entra al embudo
+       en la lista "Redes Sociales" a nombre del asesor de redes, con su recordatorio
+       de llamada (sale en su calendario y en su celular) y un aviso por Telegram.
+       Va ANTES del Basic Auth, porque ManyChat no manda usuario/contraseña: el
+       permiso es el TOKEN propio (secreto PROSPECTO_TOKEN). Si el mismo teléfono
+       vuelve a escribir, NO se duplica: se le agrega el comentario a su proyecto. */
+    if (p === '/api/prospecto' && req.method === 'POST') {
+      const TOKEN = process.env.PROSPECTO_TOKEN || '';
+      let d = {};
+      try { d = JSON.parse(await readBody(req)); } catch { d = {}; }
+      const tokenDado = req.headers['x-prospecto-token'] || u.searchParams.get('token') || d.token || '';
+      if (!TOKEN) return sendJSON(res, 503, { error: 'Falta configurar el secreto PROSPECTO_TOKEN en el servidor.' });
+      if (String(tokenDado) !== TOKEN) { res.writeHead(401); res.end('no'); return; }
+      try {
+        const state = JSON.parse(leerStateValue() || '{}');
+        const ahoraTxt = () => { const x = new Date(); return new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString().slice(0, 19).replace('T', ' '); };
+        const hoyTxt = () => ahoraTxt().slice(0, 10);
+        const digitos = String(d.telefono || d.phone || '').replace(/\D/g, '').slice(-10);
+        const nombre = String(d.nombre || d.name || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+        /* El prospecto entra al embudo SOLO cuando ya dejó su teléfono (10 dígitos):
+           sin número no hay a quién llamar, así que el bot debe seguir pidiéndolo. */
+        if (digitos.length !== 10) return sendJSON(res, 400, { error: 'Falta el teléfono a 10 dígitos: sin número el prospecto no entra al embudo.', falta: 'telefono' });
+        const canal = String(d.canal || d.channel || '').trim() || 'Redes Sociales';
+        const anuncio = String(d.anuncio || d.ad || '').trim();
+        const m2 = String(d.m2 || d.metros || '').trim();
+        const mensaje = String(d.mensaje || d.message || '').trim().slice(0, 500);
+        const asesor = process.env.PROSPECTO_ASESOR || 'Briayan Esteban Noperi Tanori';
+        const tel = digitos ? ('+52 ' + digitos.slice(0, 3) + '-' + digitos.slice(3, 6) + '-' + digitos.slice(6)) : '';
+        const texto = [`Prospecto nuevo de ${canal}${anuncio ? ' · anuncio: ' + anuncio : ''}.`,
+          m2 ? `Metros: ${m2}.` : '', mensaje ? `Dijo: "${mensaje}"` : ''].filter(Boolean).join(' ');
+        // ¿ya existe ese teléfono?
+        const mismo = digitos && (state.projects || []).find((x) => x && String(x.telefono || '').replace(/\D/g, '').slice(-10) === digitos);
+        if (mismo) {
+          mismo.bitacora = mismo.bitacora || [];
+          const textoVuelve = [`Volvió a escribir por ${canal}.`, m2 ? `Metros: ${m2}.` : '', mensaje ? `Dijo: "${mensaje}"` : ''].filter(Boolean).join(' ');
+          mismo.bitacora.push({ fecha: ahoraTxt(), usuario: 'ManyChat', texto: textoVuelve, origenApp: 'manychat' });
+          fusionarDelta({ upserts: { projects: [mismo] } });
+          subirRev();
+          try { const TG = await import('./telegram.mjs'); await TG.tgNotificarPersonas(state, [mismo.asesor || asesor], `💬 <b>${nombre || tel}</b> volvió a escribir por ${canal}\n📱 ${tel}\n📋 ${[mismo.numHebel, mismo.nombre].filter(Boolean).join(' · ')}`); } catch (e) { /* sin Telegram no pasa nada */ }
+          return sendJSON(res, 200, { ok: true, nuevo: false, proyecto: mismo.numHebel || '', id: mismo.id });
+        }
+        // proyecto nuevo, en la lista "Redes Sociales" del embudo
+        const folio = Math.max(Number(state.nextFolio) || 1, (state.projects || []).reduce((m, x) => Math.max(m, Number(x.folio) || 0), 0) + 1);
+        const usado = (state.projects || []).reduce((m, x) => { const r = /^IN-(\d+)$/i.exec(String((x && x.numHebel) || '').trim()); return r ? Math.max(m, Number(r[1]) || 0) : m; }, 0);
+        const nIN = Math.max(Number(state.nextIN) || 1, usado + 1);
+        const etapas = Array.isArray(state.etapasEmbudo) ? state.etapasEmbudo : null;
+        const proy = {
+          id: Date.now(), folio, numHebel: 'IN-' + String(nIN).padStart(4, '0'),
+          creado: ahoraTxt(), fechaSolicitud: hoyTxt(), usuario: 'ManyChat',
+          nombre: (canal + ' ' + (nombre || tel)).trim().slice(0, 70),
+          ciudad: String(d.ciudad || 'Hermosillo'), estado: String(d.estado || 'Sonora'),
+          asesor, linea: 'Hebel', sistemas: [], direccionEntrega: '',
+          cliente: 'Publico General', promotor: '', telefono: tel, email: String(d.email || '').trim(),
+          descCliente: 0, embudo: 'Redes Sociales', cotAsesor: false, cotizado: 'no', estatus: '',
+          notas: [texto, anuncio ? 'Anuncio: ' + anuncio : ''].filter(Boolean).join('\n'),
+          comoEntero: 'Redes Sociales', origenApp: 'manychat', canalProspecto: canal, anuncioProspecto: anuncio,
+          bitacora: [{ fecha: ahoraTxt(), usuario: 'ManyChat', texto, origenApp: 'manychat',
+            rec: { que: 'llamar', fecha: hoyTxt(), para: asesor, hecho: false } }]
+        };
+        const escalares = { nextFolio: folio + 1, nextIN: nIN + 1 };
+        if (etapas && !etapas.includes('Redes Sociales')) escalares.etapasEmbudo = ['Redes Sociales'].concat(etapas);
+        fusionarDelta({ upserts: { projects: [proy] }, escalares });
+        subirRev();
+        try { const TG = await import('./telegram.mjs'); await TG.tgNotificarPersonas(state, [asesor], `🆕 <b>Prospecto de ${canal}</b>\n👤 ${nombre || '(sin nombre)'}\n📱 ${tel || '(sin teléfono)'}\n${m2 ? '📐 ' + m2 + '\n' : ''}${anuncio ? '📣 ' + anuncio + '\n' : ''}📋 ${proy.numHebel} · llámalo hoy`); } catch (e) { /* sin Telegram no pasa nada */ }
+        console.log(`  Prospecto de ${canal}: ${proy.numHebel} (${nombre || tel}) → ${asesor}`);
+        return sendJSON(res, 200, { ok: true, nuevo: true, proyecto: proy.numHebel, id: proy.id });
+      } catch (e) {
+        console.warn('  Prospecto (ManyChat):', e && e.message || e);
+        return sendJSON(res, 500, { error: 'No se pudo registrar el prospecto.' });
+      }
+    }
+
     /* RF-562: CALENDARIO SUSCRIBIBLE (.ics) — el iPhone/Android/Outlook se suscribe
        a "/cal/<token>.ics" y ve SUS eventos y recordatorios del embudo, siempre al
        día. Va ANTES del Basic Auth porque el teléfono no manda usuario/contraseña:
