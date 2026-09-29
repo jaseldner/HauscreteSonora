@@ -394,6 +394,14 @@
     <div class="card" id="cotCardPart" hidden>
       <label>Partidas de la cotización</label>
       <div id="cotPartidas"></div>
+      <!-- RF-638: el IVA se puede cambiar a 8% (frontera); de fábrica queda en 16% -->
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <label for="cotIva" style="margin:0">IVA</label>
+        <select id="cotIva" style="width:auto;min-width:150px;margin:0">
+          <option value="16">16%</option>
+          <option value="8">8% (frontera)</option>
+        </select>
+      </div>
       <div id="cotTotales" style="margin-top:10px;font-size:15px;line-height:1.8;border-top:2px solid var(--line);padding-top:8px"></div>
       <button class="btn ok" id="btnCotGuardar" type="button">✓ Guardar cotización</button>
       <div class="err" id="cotErr" hidden></div>
@@ -2152,10 +2160,20 @@ $("btnLimpiar").addEventListener("click",limpiarFirma);
    liga desde el CRM se ve la remisión completa, no solo el garabato) Y la que se
    comparte por WhatsApp/correo. */
 // RF-275: convertir a TARIMAS (block/panel) o dejar en su unidad (mortero, laminilla…)
-function prodDe(codigo){ return (state&&state.productos||[]).find(p=>p.codigo===codigo)||{}; }
+/* RF-553: los códigos de las facturas traen el sufijo del proveedor ("BL4154061-HEBEL")
+   y el catálogo los guarda sin él, así que la búsqueda exacta fallaba y el material
+   NO se convertía a tarimas (salía en m³). Se busca igual que en el sistema. */
+function prodDe(codigo){
+  const lista=(state&&state.productos)||[];
+  return lista.find(p=>p.codigo===codigo)
+      || lista.find(p=>rtCodNorm(p.codigo)===rtCodNorm(codigo))
+      || {};
+}
 function cantEnTarimas(codigo, cant){
   const pr=prodDe(codigo); cant=Number(cant)||0;
-  if(pr.volPieza>0 && pr.pzasTarima>0) return {n:cant/pr.volPieza/pr.pzasTarima, u:"tarimas"};
+  /* m³ por tarima: de las piezas (volPieza × piezas por tarima) o del factor directo */
+  const porTarima = (pr.volPieza>0 && pr.pzasTarima>0) ? pr.volPieza*pr.pzasTarima : (Number(pr.volTarima)||0);
+  if(porTarima>0 && pr.mostrarPT!=="no") return {n:cant/porTarima, u:"tarimas"};
   return {n:cant, u:(pr.unidad||"")};
 }
 const fmtCant = x => { const r=Math.round((Number(x)||0)*100)/100; return Number.isInteger(r)?String(r):r.toFixed(2).replace(/0+$/,"").replace(/\.$/,""); };
@@ -2195,9 +2213,19 @@ async function componerRemision(pf, rem, receptor, firmaDataUrl){
   g.fillText(`Cliente: ${p.cliente||"—"}`,24,y); y+=30;
   g.fillText(`Proyecto: ${(p.numHebel?p.numHebel+" - ":"")+(p.nombre||"")}`.slice(0,64),24,y); y+=30;
   g.fillText(`Suministro: ${rem.origen==="inventario"?"Inventario local":"Directo de planta"}`,24,y); y+=44;
-  g.font="700 19px system-ui"; g.fillStyle=NARANJA; g.fillText("Material entregado:",24,y); y+=32;
+  g.font="700 19px system-ui"; g.fillStyle=NARANJA; g.fillText("Material entregado:",24,y);
+  /* RF-553: columna de TARIMAS a la derecha de la cantidad, para el material que va
+     por m³ (block y panel). Lo que se mide por pieza o paquete no lleva tarimas. */
+  g.font="700 15px system-ui"; g.textAlign="right"; g.fillText("Tarimas",640,y); g.textAlign="left";
+  y+=32;
   g.fillStyle="#1B2733"; g.font="400 18px system-ui";
-  rem.partidas.forEach(pt=>{ g.fillText(`• ${pt.descripcion}`.slice(0,48),34,y); g.textAlign="right"; g.fillText(`${n2(pt.cantidad)} ${pt.unidad||""}`,468,y); g.textAlign="left"; y+=34; });
+  rem.partidas.forEach(pt=>{
+    g.fillText(`• ${pt.descripcion}`.slice(0,48),34,y);
+    g.textAlign="right"; g.fillText(`${n2(pt.cantidad)} ${pt.unidad||""}`,468,y);
+    const t=cantEnTarimas(pt.codigo, pt.cantidad);   // RF-553
+    if(t.u==="tarimas") g.fillText(fmtCant(t.n),640,y);
+    g.textAlign="left"; y+=34;
+  });
   y+=20;
   const yRow=y;
   // ---- Firma (columna izquierda) ----
@@ -2500,6 +2528,7 @@ const TIPOS_DESC_CLI=["Block","Mortero","Laminilla"];
 const money = x => "$"+Number(x||0).toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2});
 function cotReset(){
   cotProy=null; cotPartidas=[]; cotSistemas=[];
+  if($("cotIva")) $("cotIva").value="16";   // RF-638: cada cotización arranca en 16%
   $("cotBuscaProy").value=""; $("cotBuscaProd").value="";
   $("cotProySel").textContent=""; $("cotCardProd").hidden=true; $("cotCardPart").hidden=true;
   $("cotCardSis").hidden=true; $("cotSisPuestos").textContent="";
@@ -2681,12 +2710,14 @@ function pintarProdCot(){
   }));
 }
 const impLinea = pt => (Number(pt.cantidad)||0)*(Number(pt.precio)||0)*(1-(Number(pt.desc)||0)/100);
+if($("cotIva")) $("cotIva").addEventListener("change", ()=>pintarTotalesCotM());   // RF-638
 /* RF-503: el precio y el descuento de cada partida se pueden MODIFICAR aquí mismo */
+const cotIvaPct = () => { const v = Number(($("cotIva")||{}).value); return isFinite(v) ? v : 16; };   // RF-638
 function pintarTotalesCotM(){
   const imp=cotPartidas.reduce((s,pt)=>s+impLinea(pt),0);
-  const iva=imp*0.16;
+  const pct=cotIvaPct(), iva=imp*pct/100;   // RF-638
   $("cotTotales").innerHTML = cotPartidas.length
-    ? `Subtotal: <b>${money(imp)}</b><br>IVA 16%: <b>${money(iva)}</b><br><span style="font-size:17px">Total: <b style="color:var(--verde)">${money(imp+iva)}</b></span>`
+    ? `Subtotal: <b>${money(imp)}</b><br>IVA ${pct}%: <b>${money(iva)}</b><br><span style="font-size:17px">Total: <b style="color:var(--verde)">${money(imp+iva)}</b></span>`
     : "";
   $("btnCotGuardar").disabled = !cotPartidas.length;
 }
@@ -2758,7 +2789,7 @@ $("btnCotGuardar").addEventListener("click", async ()=>{
     const _cliBase=String(cotProy.cliente||"").trim();
     const cot={ id:Date.now(), folio, proyectoId:cotProy.id, creado:ahora(), usuario:usuarioApp,
       clienteFactura:(cotDirigida && cotDirigida!==_cliBase) ? cotDirigida : "",   // RF-570: a quién va dirigida (override, como RF-405)
-      fecha:hoy(), vigencia:vigStr, moneda:"MXN", iva:16, referencia:"", sistemas:cotSistemas.slice(),   // RF-529
+      fecha:hoy(), vigencia:vigStr, moneda:"MXN", iva:cotIvaPct(), referencia:"", sistemas:cotSistemas.slice(),   // RF-529 · RF-638: 16% u 8% de frontera
       entrega:(st.entregasCat||[])[0]||"", cuenta:((st.cuentasCat||[])[0]||{}).nombre||"",
       direccionEntrega:cotProy.direccionEntrega||"", pago:"100%", condicion:"Contado", m2:"",
       origen:"matriz", ocultarEmpresa:false, herramientaM2:false, facturada:"no",

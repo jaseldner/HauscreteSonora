@@ -1413,7 +1413,7 @@
           <button class="x" data-close="ovInvFis" aria-label="Cerrar">×</button>
         </div>
         <div class="m-body">
-          <p class="hint" style="margin-bottom:10px">Este es el <b>único lugar</b> para capturar el conteo físico. El levantamiento se hace al <b>CIERRE</b> del mes y lo contado se vuelve el <b>inv. inicial del mes SIGUIENTE</b> (RF-337). El <b>teórico</b> es el cierre que calcula el sistema para ese mes; captura lo <b>contado físicamente</b> y las <b>diferencias</b> quedan registradas como evidencia.</p>
+          <p class="hint" style="margin-bottom:10px">Este es el <b>único lugar</b> para capturar el conteo físico. El levantamiento se hace al <b>CIERRE</b> del mes y lo contado se vuelve el <b>inv. inicial del mes SIGUIENTE</b> (RF-337). El <b>teórico</b> es el cierre que calcula el sistema para ese mes; captura lo <b>contado físicamente</b> y las <b>diferencias</b> quedan registradas como evidencia. <b>RF-554:</b> el teórico es lo que debe haber <b>en la bodega</b> —igual que la columna “Existencia en bodega”—, así que <b>NO incluye</b> lo que está en consignación, en muestras ni en los carros de los asesores: ese material ya salió y no se cuenta aquí.</p>
           <!-- RF-518: el mes que se CIERRA se elige aquí, ya no se hereda en silencio del reporte -->
           <div class="filters" style="gap:12px;align-items:flex-end;margin-bottom:10px;padding:8px 10px;background:#EEF2F6;border-radius:8px">
             <div class="fld" style="max-width:220px;margin:0"><label for="ifMesCierre">Mes que se CIERRA con este conteo</label>
@@ -12716,6 +12716,18 @@ function invSalidasResgMes(mesKey){
   }));
   return map;
 }
+/* RF-554: material que YA SALIÓ de la bodega y sigue siendo de la empresa o ya se
+   entregó: consignación en casa del cliente, muestras y lo que traen los asesores en
+   su carro. La tabla de Inventario Bodega lo resta de la existencia, así que el conteo
+   físico también lo tiene que descontar (y el inicial que se guarda, reponerlo). */
+function invFueraBodega(){
+  const t={};
+  const sumar = m => Object.keys(m||{}).forEach(k=>{ t[k]=(t[k]||0)+(Number(m[k])||0); });
+  sumar(typeof csSaldoPorCodigo==="function" ? csSaldoPorCodigo() : {});
+  sumar(typeof msPorCodigo==="function" ? msPorCodigo() : {});
+  sumar(typeof mvPorCodigo==="function" ? mvPorCodigo() : {});
+  return t;
+}
 function invFinalMapaDe(mesKey, prof){
   /* RF-511 (regla definitiva 28/08, caso MACX): la EXISTENCIA resta las salidas
      propias Y las salidas del RESGUARDO — el material de terceros que sale también
@@ -14996,7 +15008,15 @@ function openInvFis(mesForzado){
   ifLlenarMeses(ifMesKey);                                          // RF-518
   if($("ifMesArrancaLbl")) $("ifMesArrancaLbl").textContent = ifNombreMes(ifMesArranca);
   $("ifIds").textContent = "Cierre de "+ifNombreMes(ifMesKey)+" → arranca "+ifNombreMes(ifMesArranca);
-  const teo=invFinalMapaDe(ifMesKey,0);                            // RF-337: cierre teórico DEL MES QUE SE CIERRA
+  /* RF-337: cierre teórico DEL MES QUE SE CIERRA.
+     RF-554: se le resta lo que está FUERA de la bodega (consignación, muestras y carros
+     de los asesores), para que el teórico sea lo mismo que la columna "Existencia en
+     bodega" y se pueda comparar contra un conteo real. Antes el teórico traía ese
+     material incluido y toda hoja salía con diferencias que no eran faltantes. */
+  const _teoBruto=invFinalMapaDe(ifMesKey,0), _fuera=invFueraBodega();
+  const teo={};
+  [...new Set([...Object.keys(_teoBruto), ...Object.keys(_fuera)])]
+    .forEach(k=>{ teo[k]=(_teoBruto[k]||0)-(_fuera[k]||0); });
   const cap=invInicialMes(ifMesArranca)||[];
   const meta={};
   (state.productos||[]).forEach(p=>{ const k=codNorm(p.codigo); if(k&&!meta[k]) meta[k]={codigo:p.codigo, desc:p.descripcion||""}; });
@@ -15007,7 +15027,10 @@ function openInvFis(mesForzado){
   ifFilas = keys.map(k=>{
     const m=meta[k]||{codigo:k, desc:""};
     const capRow=cap.find(r=>codNorm(r.codigo)===k);
-    return {codigo:m.codigo, desc:m.desc, teorico:teo[k]||0, fisico: capRow!=null?String(capRow.cantidad):""};
+    /* RF-554: al reabrir, se precarga lo que se CONTÓ (no el inicial guardado, que
+       además trae repuesto lo que estaba fuera de la bodega) */
+    const _cont = capRow==null ? null : (capRow.contado!=null ? capRow.contado : capRow.cantidad);
+    return {codigo:m.codigo, desc:m.desc, teorico:teo[k]||0, fisico: _cont!=null?String(_cont):""};
   });
   /* RF-341: recordar al que cuenta que en la bodega hay material que NO es de Hauscrete */
   const rMapa=resgMapa(), rCods=Object.keys(rMapa);
@@ -15133,7 +15156,15 @@ $("btnIfGuardar").addEventListener("click", async ()=>{
     "\n\n¿Es correcto?";
   if(!(await confirmar(_msg))) return;
   state.invInicial=state.invInicial||{};
-  state.invInicial[ifMesArranca]=contadas.map(f=>({codigo:f.codigo, descripcion:f.desc||"", cantidad:Number(f.fisico)||0}));
+  /* RF-554: lo contado es lo que hay FÍSICAMENTE en la bodega. El inicial que se guarda
+     le REPONE lo que está fuera (consignación, muestras y carros), porque la tabla se lo
+     vuelve a restar al mostrar la existencia; si se guardara tal cual, el mes siguiente
+     descontaría ese material dos veces. Se conservan `contado` y `fuera` como evidencia. */
+  const _fueraG = invFueraBodega();
+  state.invInicial[ifMesArranca]=contadas.map(f=>{
+    const cont=Number(f.fisico)||0, fue=Number(_fueraG[codNorm(f.codigo)])||0;
+    return {codigo:f.codigo, descripcion:f.desc||"", cantidad:cont+fue, contado:cont, fuera:fue};
+  });
   state.invFisico=state.invFisico||{};
   /* RF-365: las hojas ya guardadas se conservan; las nuevas se suben al storage ahora */
   const hojasPrev = ifHojasGuardadas().slice();
