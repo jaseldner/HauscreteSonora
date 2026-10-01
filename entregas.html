@@ -1303,7 +1303,7 @@ $("btnRtNcGuardar").addEventListener("click", async ()=>{
     const ya = (fresco.clientes||[]).find(c=>c && String(c.nombre||"").trim().toLowerCase()===nombre.toLowerCase());
     if(ya){
       state = fresco; rtLlenarClientes();
-      if(rtClientes().includes(ya.nombre)){ $("rtCliente").value = ya.nombre; rtAplicarCategoria(); rtPintar(); $("rtCliNuevoBox").hidden = true; $("btnRtCliNuevo").hidden = false; }
+      if(rtClientes().includes(ya.nombre)){ $("rtCliente").value = ya.nombre; rtAplicarCategoria(); rtLlenarProyectos(); rtPintar(); $("rtCliNuevoBox").hidden = true; $("btnRtCliNuevo").hidden = false; }   /* RF-639 */
       throw new Error(`Ya existe un cliente llamado "${ya.nombre}"`+(rtClientes().includes(ya.nombre) ? ": ya quedó elegido." : ", pero no es de la línea Abrasivos: pide que lo marquen en el sistema."));
     }
     const mayor = (fresco.clientes||[]).reduce((m,c)=>{ const r = /^CL-(\d+)$/.exec(String((c&&c.clave)||"")); return r ? Math.max(m, Number(r[1])) : m; }, 0);
@@ -1315,9 +1315,12 @@ $("btnRtNcGuardar").addEventListener("click", async ()=>{
     (fresco.clientes = fresco.clientes||[]).push(cli);
     state = fresco;
     rtLlenarClientes(); $("rtCliente").value = nombre;
-    rtAplicarCategoria(); rtPintar();
+    rtAplicarCategoria(); rtLlenarProyectos(); rtPintar();
     $("rtCliNuevoBox").hidden = true; $("btnRtCliNuevo").hidden = false;
-    mToast("✓ Cliente "+cli.clave+" dado de alta");
+    /* RF-639: un cliente recién dado de alta no tiene proyectos, así que aquí mismo se
+       abre el alta del proyecto (antes había que salirse de la pantalla y volver). */
+    if(!rtEsDevol() && $("btnRtProyNuevo") && !$("btnRtProyNuevo").hidden) $("btnRtProyNuevo").click();
+    mToast("✓ Cliente "+cli.clave+" dado de alta · ahora dale nombre a su proyecto");
   }catch(e){ err(e.message); }
   $("btnRtNcGuardar").disabled = false;
 });
