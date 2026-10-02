@@ -574,52 +574,55 @@
   .pdf-hebel{background:#F04E23;color:#fff;font-weight:800;font-size:15px;padding:16px 12px;border-radius:3px}
   .pdf-emp{flex:1;text-align:center;font-size:11.5px;line-height:1.45}
   .pdf-num{width:175px;flex:none;text-align:center}
-  .pdf-num .h{background:#2E7D46;color:#fff;font-weight:700;font-size:12.5px;padding:4px;border:1px solid #2E7D46}
-  .pdf-num .n{font-size:24px;font-weight:700;padding:4px;border:1px solid #000;border-top:none}
-  .pdf-cliente{background:#2E7D46;color:#fff;font-weight:700;padding:5px 9px;margin-top:12px;font-size:12px;border:1px solid #2E7D46}
-  .pdf-info{display:flex;border:1px solid #000;border-top:none}
+  /* RF-642: TODAS las líneas del documento en un gris suave (antes negro, se veían
+     gruesas). Contorno en la caja del folio, en la barra del cliente, en el encabezado
+     de la tabla, entre renglones y en las etiquetas de los totales. */
+  .pdfdoc{--pdf-ln:#9AA5B1}
+  .pdf-num .h{background:#2E7D46;color:#fff;font-weight:700;font-size:12.5px;padding:4px;border:1px solid var(--pdf-ln)}
+  .pdf-num .n{font-size:24px;font-weight:700;padding:4px;border:1px solid var(--pdf-ln);border-top:none}
+  .pdf-cliente{background:#2E7D46;color:#fff;font-weight:700;padding:5px 9px;margin-top:12px;font-size:12px;border:1px solid var(--pdf-ln)}
+  .pdf-info{display:flex;border:1px solid var(--pdf-ln);border-top:none}
   .pdf-info>div{padding:7px 9px;line-height:1.8}
-  .pdf-info .iz{width:38%;border-right:1px solid #000}
+  .pdf-info .iz{width:38%;border-right:1px solid var(--pdf-ln)}
   .pdf-info .de{flex:1}
   .pdf-info .iz .r{display:grid;grid-template-columns:76px 1fr;gap:8px}
   .pdf-info .de .r{display:flex;justify-content:space-between;gap:12px}
   .pdf-info .r span{white-space:nowrap}
   .pdf-info .de .r b{text-align:right}
   .pdf-info b{font-weight:400}
-  /* RF-640: cada dato con su línea, para que los recuadros se vean como recuadros */
-  .pdf-info .r{border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:2px}
-  .pdf-info .r:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0}
+  /* RF-642: sin línea entre cada dato de los recuadros (se quitaron, a pedido) */
   .pdf-intro{margin:14px 0 6px}
-  .pdf-tbl{width:100%;min-width:0;border-collapse:collapse;font-size:11.5px;border:1.5px solid #000} /* min-width:0 anula el min-width:1150px global de las tablas del sistema */
-  .pdf-tbl th{background:#2E7D46;color:#fff;font-weight:700;padding:5px 7px;text-align:left}
+  .pdf-tbl{width:100%;min-width:0;border-collapse:collapse;font-size:11.5px;border:1px solid var(--pdf-ln)} /* min-width:0 anula el min-width:1150px global de las tablas del sistema */
+  .pdf-tbl th{background:#2E7D46;color:#fff;font-weight:700;padding:5px 7px;text-align:left;border:1px solid var(--pdf-ln)}
   .pdf-tbl th.n,.pdf-tbl td.n{text-align:right}
-  .pdf-tbl td{padding:4.5px 7px;border-right:1px solid #000}
-  .pdf-tbl th{border-right:1px solid rgba(255,255,255,.45)}
+  .pdf-tbl td{padding:4.5px 7px;border-right:1px solid var(--pdf-ln)}
   .pdf-tbl td:last-child,.pdf-tbl th:last-child{border-right:none}
   /* RF-640: línea entre un producto y el siguiente (el renglón de tarimas/m² va pegado
      al suyo), y los montos nunca se parten ni se salen de su columna */
-  .pdf-tbl tbody tr:not(.subrow)+tr:not(.subrow) td,.pdf-tbl tbody tr.subrow+tr td{border-top:1px solid #000}
+  /* RF-642: línea entre TODOS los renglones y al final de la tabla. Va abajo de cada
+     celda porque la regla general "tbody td" le ponía un borde casi blanco que ganaba. */
+  .pdf-tbl td{border-bottom:1px solid var(--pdf-ln)}
   .pdf-tbl td.n{white-space:nowrap}
   .pdf-tbl tr.alt td{background:#DFF5DF}
   /* Documento de FACTURA/prefactura: mismo machote pero en AZUL, para distinguirlo
      de un vistazo de la cotización (verde). */
-  .pdfdoc.pdf-factura .pdf-num .h{background:#1C4E80;border-color:#1C4E80}
+  .pdfdoc.pdf-factura .pdf-num .h{background:#1C4E80}
   /* RF-220: la prefactura/factura también lleva AZUL la barra del cliente y la caja de
      totales (antes se quedaban en el verde de la cotización). */
-  .pdfdoc.pdf-factura .pdf-cliente{background:#1C4E80;border-color:#1C4E80}
+  .pdfdoc.pdf-factura .pdf-cliente{background:#1C4E80}
   .pdfdoc.pdf-factura .pdf-tots span{background:#1C4E80}
   /* RF-213: la ORDEN DE COMPRA va toda en AZUL, para distinguirla de un vistazo de
      la cotización (verde). Cambia el cuadro del folio, la barra del proveedor, el
      encabezado de la tabla, el sombreado alterno y la caja de totales. */
-  .pdfdoc.pdf-oc .pdf-num .h{background:#1C4E80;border-color:#1C4E80}
-  .pdfdoc.pdf-oc .pdf-cliente{background:#1C4E80;border-color:#1C4E80}
+  .pdfdoc.pdf-oc .pdf-num .h{background:#1C4E80}
+  .pdfdoc.pdf-oc .pdf-cliente{background:#1C4E80}
   .pdfdoc.pdf-oc .pdf-tbl th{background:#1C4E80}
   .pdfdoc.pdf-oc .pdf-tbl tr.alt td{background:#E3ECF6}
   .pdfdoc.pdf-oc .pdf-tots span{background:#1C4E80}
   /* RF-219: la REMISIÓN DE ENTREGA va en AMARILLO/ámbar y sin montos, para distinguirla
      de la cotización (verde), la factura y la OC (azul). */
-  .pdfdoc.pdf-remision .pdf-num .h{background:#C79A00;border-color:#000}
-  .pdfdoc.pdf-remision .pdf-cliente{background:#C79A00;border-color:#000}
+  .pdfdoc.pdf-remision .pdf-num .h{background:#C79A00}
+  .pdfdoc.pdf-remision .pdf-cliente{background:#C79A00}
   .pdfdoc.pdf-remision .pdf-tbl th{background:#C79A00}
   .pdfdoc.pdf-remision .pdf-tbl tr.alt td{background:#FBF3D5}
   .pdfdoc.pdf-remision .pdf-tots span{background:#C79A00}
@@ -675,9 +678,9 @@
   /* RF-640: los montos de millones no cabían en 96px y se salían de su recuadro,
      invadiendo el margen derecho de la hoja. Celdas más anchas, sin cortes y con su
      línea alrededor; el bloque sigue pegado al margen derecho del documento. */
-  .pdf-tots span{background:#2E7D46;color:#fff;font-weight:700;padding:2.5px 8px;width:92px;text-align:right;white-space:nowrap}
-  .pdf-tots b{padding:2.5px 8px;width:130px;text-align:right;font-weight:600;white-space:nowrap;border:1px solid #000;border-left:none}
-  .pdf-tots div+div b{border-top:none}
+  .pdf-tots span{background:#2E7D46;color:#fff;font-weight:700;padding:2.5px 8px;width:92px;text-align:right;white-space:nowrap;border:1px solid var(--pdf-ln)}
+  .pdf-tots b{padding:2.5px 8px;width:130px;text-align:right;font-weight:600;white-space:nowrap;border:1px solid var(--pdf-ln);border-left:none}
+  .pdf-tots div+div b,.pdf-tots div+div span{border-top:none}
   .pdf-asesor{margin-top:22px;line-height:1.5}
   .pdf-bottom{display:flex;gap:24px;margin-top:16px;align-items:flex-start}
   .pdf-obs{line-height:1.5;flex:1}
