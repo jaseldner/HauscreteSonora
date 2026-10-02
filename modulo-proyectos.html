@@ -6487,7 +6487,7 @@ function filaPartida(pt, i, doc, onRecalc){
   const _roPF = esPrefac ? 'readonly tabindex="-1" style="background:#F2F5F8;color:var(--steel);pointer-events:none"' : "";
   const unidades = UNIDADES.includes(pt.unidad)||!pt.unidad ? UNIDADES : [pt.unidad, ...UNIDADES];
   tr.innerHTML = `
-    <td><input data-f="codigo" list="dlProductos" value="${esc(pt.codigo||"")}" placeholder="BL4154061-HEBEL"></td>
+    <td><input data-f="codigo" data-ac="prod" autocomplete="off" value="${esc(pt.codigo||"")}" placeholder="BL4154061-HEBEL"></td>
     <td><input data-f="descripcion" value="${esc(pt.descripcion)}" ${esOC?'readonly tabindex="-1" title="La descripción viene de la base de productos" style="background:#F2F5F8;color:var(--steel);pointer-events:none"':''} placeholder="Block Semi Jumbo AAC4…"></td>
     <td><input data-f="unidad" value="${esc(pt.unidad||"")}" readonly tabindex="-1" title="La unidad viene del alta del producto (Ajustes)" style="background:#F2F5F8;color:var(--steel);pointer-events:none;min-width:64px"></td>
     <td><input data-f="cantidad" type="number" min="0" step="0.0001" value="${esc(pt.cantidad)}"></td>
@@ -14958,7 +14958,7 @@ function irRenderPartidas(){
   const tb=$("irBody"); tb.innerHTML="";
   irPartidas.forEach((pt,i)=>{
     const tr=document.createElement("tr");
-    tr.innerHTML = `<td><input data-f="codigo" value="${esc(pt.codigo||"")}" list="dlProductos" style="width:100%"></td>`+
+    tr.innerHTML = `<td><input data-f="codigo" value="${esc(pt.codigo||"")}" data-ac="prod" autocomplete="off" style="width:100%"></td>`+
       `<td><input data-f="descripcion" value="${esc(pt.descripcion||"")}" style="width:100%"></td>`+
       `<td><input data-f="cantidad" type="number" step="0.0001" value="${pt.cantidad??""}" style="width:90px;text-align:right"></td>`+
       `<td><select data-f="destino" style="width:100%">
@@ -20194,6 +20194,71 @@ function syncDlProductos(){
   $("dlProductos").innerHTML = state.productos
     .map(p=>`<option value="${esc(p.codigo)}">${esc(p.descripcion)} · ${dinero(p.precio,"MXN")}</option>`).join("");
 }
+/* ===== RF-645: BUSCADOR DE PRODUCTOS EN EL CAMPO "CÓDIGO" =====
+   La lista nativa del navegador (datalist) en Safari mide lo mismo que el campo y
+   corta la descripción: no se sabía qué conector era. Ahora sale una lista propia,
+   ancha, con CÓDIGO, DESCRIPCIÓN completa, unidad y precio; busca por código Y por
+   descripción (sin importar acentos) y se maneja con el mouse o con las flechas +
+   Enter. Al elegir, el código se pone en el campo y se llenan los datos como siempre. */
+const acNorm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+let acInput = null, acSel = -1, acLista = [];
+function acCaja(){
+  let d = document.getElementById("acProd");
+  if(!d){
+    d = document.createElement("div"); d.id = "acProd"; d.hidden = true;
+    d.style.cssText = "position:fixed;z-index:400;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 28px rgba(14,42,71,.22);max-height:320px;overflow:auto;font-size:13px";
+    d.addEventListener("mousedown", e=>{ const it = e.target.closest("[data-i]"); if(!it) return; e.preventDefault(); acElegir(Number(it.dataset.i)); });
+    document.body.appendChild(d);
+  }
+  return d;
+}
+function acCerrar(){ const d = document.getElementById("acProd"); if(d) d.hidden = true; acSel = -1; acLista = []; }
+function acPintar(){
+  const d = acCaja(); if(!acInput) return;
+  const q = acNorm(acInput.value);
+  const prods = (state.productos||[]).filter(p=>p && p.codigo);
+  acLista = !q ? prods.slice(0,40) : prods.filter(p=>acNorm(p.codigo).includes(q) || acNorm(p.descripcion).includes(q))
+    .sort((a,b)=>(acNorm(a.codigo).startsWith(q)?0:1)-(acNorm(b.codigo).startsWith(q)?0:1) || String(a.codigo).localeCompare(String(b.codigo),"es"))
+    .slice(0,40);
+  if(!acLista.length){ d.hidden = true; return; }
+  if(acSel >= acLista.length) acSel = acLista.length-1;
+  d.innerHTML = acLista.map((p,i)=>`<div data-i="${i}" style="display:flex;gap:12px;align-items:baseline;padding:7px 12px;cursor:pointer;border-bottom:1px solid #EEF2F6;${i===acSel?"background:#EDF3F8":""}">
+      <b style="min-width:108px;color:var(--navy);white-space:nowrap">${esc(p.codigo)}</b>
+      <span style="flex:1;color:var(--ink)">${esc(p.descripcion||"")}</span>
+      <span style="color:var(--steel);white-space:nowrap">${esc(p.unidad||"")}${Number(p.precio)?" · "+dinero(p.precio,"MXN"):""}</span></div>`).join("");
+  const r = acInput.getBoundingClientRect();
+  const ancho = Math.min(620, window.innerWidth - 24);
+  d.style.width = ancho+"px";
+  d.style.left = Math.max(12, Math.min(r.left, window.innerWidth - ancho - 12))+"px";
+  const abajo = window.innerHeight - r.bottom;
+  if(abajo < 200 && r.top > abajo){ d.style.top = ""; d.style.bottom = (window.innerHeight - r.top + 4)+"px"; }
+  else { d.style.bottom = ""; d.style.top = (r.bottom + 4)+"px"; }
+  d.hidden = false;
+  const act = d.querySelector(`[data-i="${acSel}"]`); if(act) act.scrollIntoView({block:"nearest"});
+}
+function acElegir(i){
+  const p = acLista[i]; if(!p || !acInput) return;
+  const inp = acInput;
+  inp.value = p.codigo;
+  inp.dispatchEvent(new Event("input", {bubbles:true}));   // dispara el autollenado de siempre
+  acCerrar();
+  // brinca a la cantidad del mismo renglón
+  const cant = inp.closest("tr") && inp.closest("tr").querySelector('[data-f="cantidad"]');
+  if(cant) setTimeout(()=>{ cant.focus(); cant.select && cant.select(); }, 0); else inp.focus();
+}
+document.addEventListener("focusin", e=>{ if(e.target.matches && e.target.matches('input[data-ac="prod"]')){ acInput = e.target; acSel = -1; acPintar(); } });
+document.addEventListener("input", e=>{ if(e.target === acInput && e.isTrusted){ acSel = -1; acPintar(); } });
+document.addEventListener("keydown", e=>{
+  if(e.target !== acInput) return;
+  const d = document.getElementById("acProd"); const abierto = d && !d.hidden;
+  if(e.key==="ArrowDown"){ e.preventDefault(); if(!abierto) acPintar(); acSel = Math.min(acSel+1, acLista.length-1); acPintar(); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); acSel = Math.max(acSel-1, 0); acPintar(); }
+  else if(e.key==="Enter" && abierto && acSel>=0){ e.preventDefault(); acElegir(acSel); }
+  else if(e.key==="Escape" && abierto){ e.preventDefault(); acCerrar(); }
+});
+document.addEventListener("focusout", e=>{ if(e.target === acInput) setTimeout(()=>{ if(document.activeElement !== acInput) acCerrar(); }, 120); });
+window.addEventListener("scroll", ()=>{ const d = document.getElementById("acProd"); if(d && !d.hidden) acPintar(); }, true);
+window.addEventListener("resize", ()=>{ const d = document.getElementById("acProd"); if(d && !d.hidden && acInput && document.activeElement===acInput) acPintar(); });   // se reacomoda, no se cierra
 // Orden de tipos para la vista general
 const ORDEN_TIPO = {"Block":1,"Panel":2,"Mortero":3,"Laminilla":4,"Periféricos":5};
 function rangoTipo(t){ return ORDEN_TIPO[t] || 9; } // "Otros" y vacíos al final
