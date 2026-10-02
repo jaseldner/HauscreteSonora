@@ -706,7 +706,7 @@
     font-family:"Inter",Arial,Helvetica,sans-serif;color:var(--dark);font-size:11px;line-height:1.35}
   .pdfdoc.pdf-factura,.pdfdoc.pdf-oc{--acc:#1C4E80}
   .pdfdoc.pdf-remision{--acc:#C79A00}
-  .pdfdoc .pdf-num .h,.pdfdoc .pdf-num .n,.pdfdoc .pdf-cliente,.pdfdoc .pdf-tbl th,.pdfdoc .pdf-son>div:first-child,
+  .pdfdoc .pdf-num .h,.pdfdoc .pdf-num .n,.pdfdoc .pdf-cliente,.pdfdoc .pdf-tbl th,.pdfdoc .pdf-son-t,.pdfdoc .pdf-asesor b,
   .pdfdoc .pdf-tots span,.pdfdoc .pdf-tots b,.pdfdoc .pdf-m2,.pdfdoc .pdf-emp-n,.pdfdoc .pdf-obs-t{font-family:"Montserrat","Inter",Arial,sans-serif}
   .pdfdoc .pdf-emp{color:var(--dark);font-size:11.5px;line-height:1.5}
   .pdfdoc .pdf-emp-n{font-weight:700;font-size:13px;letter-spacing:.04em}
@@ -729,7 +729,12 @@
   .pdfdoc .pdf-tbl tr.subrow td{background:#fff;padding-top:7px}
   .pdfdoc .pdf-tbl tr.subrow.alt td{background:var(--gris)}
   .pdfdoc .pdf-son{margin-top:14px;gap:24px}
-  .pdfdoc .pdf-son>div:first-child{font-weight:800;font-size:12.5px;color:var(--dark);text-transform:uppercase;line-height:1.45;padding-top:4px}
+  .pdfdoc .pdf-son-iz{flex:1;min-width:0}
+  .pdfdoc .pdf-son-t{font-weight:800;font-size:12.5px;color:var(--dark);text-transform:uppercase;line-height:1.45;padding-top:4px}
+  /* RF-644: asesor junto a los totales y su nombre más grande */
+  .pdfdoc .pdf-son .pdf-asesor{margin-top:16px}
+  .pdfdoc .pdf-asesor{font-weight:400;font-size:11.5px;line-height:1.55;color:var(--dark)}
+  .pdfdoc .pdf-asesor b{font-size:14px;font-weight:800;letter-spacing:.01em;display:inline-block;margin:2px 0 1px}
   .pdfdoc .pdf-tots span{background:var(--dark);color:#fff;border:1px solid var(--dark);width:112px;text-align:left;padding:6px 11px;font-size:12px;font-weight:700}
   .pdfdoc .pdf-tots b{border:1px solid var(--pdf-ln);border-left:none;width:152px;padding:6px 11px;font-size:12.5px;font-weight:700;color:var(--dark);background:#fff}
   .pdfdoc .pdf-tots div+div span{border-top:1px solid #555B62}
@@ -17628,6 +17633,9 @@ function construirDocCot(c){
   const obs = obsItems.length ? `<ul>${obsItems.map(o=>`<li>${o}</li>`).join("")}</ul>` : "";
   const asesor = p.asesor||"";
   const fa = fichaAsesor(asesor);
+  /* RF-644: el bloque del ASESOR va a la izquierda, debajo del "SON:", a la altura de
+     los totales (como el diseño); antes quedaba abajo de los totales con mucho hueco */
+  const asesorHTML = esRemision ? "" : `<div class="pdf-asesor">ASESOR:<br><b>${esc(asesor.toUpperCase())}</b>${fa&&fa.correo?`<br>${esc(fa.correo)}`:""}${fa&&fa.celular?`<br>${esc(fa.celular)}`:""}</div>`;
   return `<div class="pdfdoc${c._pdfClase?(" "+c._pdfClase):(c._esFactura?" pdf-factura":"")}">
     <div class="pdf-top">
       <div class="pdf-logos">${htmlLogosPDF(c._esFactura?"factura":"cotizacion", p, c.partidas)}</div>
@@ -17661,7 +17669,7 @@ function construirDocCot(c){
       <tbody>${filas}</tbody>
     </table>
     ${sinMontos?"":`<div class="pdf-son">
-      <div>SON: ${numeroALetras(t.tot)}</div>
+      <div class="pdf-son-iz"><div class="pdf-son-t">SON: ${numeroALetras(t.tot)}</div>${asesorHTML}</div>
       <div class="pdf-tots">
         ${(timbradaPDF && t.desc>0.005)?`<div><span>Descuento:</span><b>${fm(t.desc)}</b></div>`:""}
         <div><span>Subtotal:</span><b>${fm(t.imp)}</b></div>
@@ -17669,7 +17677,7 @@ function construirDocCot(c){
         <div class="tot"><span>Total:</span><b>${fm(t.tot)}</b></div>
       </div>
     </div>`}
-    ${esRemision?"":`<div class="pdf-asesor">ASESOR:<br><b>${esc(asesor.toUpperCase())}</b>${fa&&fa.correo?`<br>${esc(fa.correo)}`:""}${fa&&fa.celular?`<br>${esc(fa.celular)}`:""}</div>`}
+    ${sinMontos ? asesorHTML : ""}
     <div class="pdf-bottom">
       <div class="pdf-obs"><div class="pdf-obs-t">Observaciones:</div>${obs}</div>
       ${(m2>0 && !c._esFactura && !esRemision)?`<div class="pdf-m2">Cotejar m² cotizados: <b>${fm(m2)}</b></div>`:""}
@@ -18843,6 +18851,18 @@ $("btnDescargarXML").addEventListener("click", async ()=>{
   }catch(e){ toast("No hay XML guardado para esta factura."); }
 });
 
+/* RF-644: carga EXPLÍCITA de las tipografías del formato antes de generar el PDF. Las
+   fuentes web solo se bajan cuando algo las usa; si el PDF se captura en ese instante,
+   sale con la letra de respaldo (más ancha, y la descripción se parte en dos renglones).
+   Se espera máximo 4 s para no trabar la descarga si no hay internet. */
+async function pdfFuentesListas(){
+  try{
+    if(!document.fonts || !document.fonts.load) return;
+    const caras = ["400 12px Inter","500 12px Inter","600 12px Inter","700 12px Inter","600 12px Montserrat","700 12px Montserrat","800 12px Montserrat"];
+    await Promise.race([Promise.all(caras.map(f=>document.fonts.load(f))), new Promise(r=>setTimeout(r,4000))]);
+    await document.fonts.ready;
+  }catch(_){}
+}
 async function descargarPDFActual(){
   if(!pdfActual) return;
   // Factura subida: descargar el archivo tal cual
@@ -18887,7 +18907,7 @@ async function descargarPDFActual(){
     // en hasta ~1.75 páginas, se escala para que quepa entero en una sola.
     // Cotizaciones muy largas siguen saliendo en varias hojas con cortes limpios.
     let unaHoja = false;
-    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(_){}   // RF-643: que el PDF salga con Montserrat/Inter
+    await pdfFuentesListas();   // RF-643/644: que el PDF salga con Montserrat e Inter, no con la letra de respaldo
     const worker = html2pdf().set(OPTS).from(host.firstChild).toContainer().then(anclar);
     const canvas = await worker.toCanvas().get("canvas");
     const innerW = esCFDI?196:190, innerH = esCFDI?255:273; // mm útiles (carta para CFDI, A4 para el resto)
@@ -18968,7 +18988,9 @@ function imprimirPDFActual(){
   const quitar = ()=>{ if(quitado) return; quitado = true; setTimeout(()=>ifr.remove(), 300); };
   win.onafterprint = quitar;
   let impreso = false;
-  const disparar = ()=>{ if(impreso) return; impreso = true;
+  const disparar = async ()=>{ if(impreso) return; impreso = true;
+    /* RF-644: espera a que las tipografías del formato estén listas (máx. 3 s) */
+    try{ if(doc.fonts && doc.fonts.ready) await Promise.race([doc.fonts.ready, new Promise(r=>setTimeout(r,3000))]); }catch(_){}
     try{ win.focus(); win.print(); }catch(e){ toast("No se pudo abrir el diálogo de impresión."); }
     setTimeout(quitar, 60000); }; // respaldo por si el navegador no emite afterprint
   // Esperar a que carguen los logos/imágenes del documento antes de imprimir
