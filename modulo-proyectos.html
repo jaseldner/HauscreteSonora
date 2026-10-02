@@ -8,6 +8,10 @@
      (al abrir el HTML suelto, sin servidor), abajo se sustituye por el logo embebido. -->
 <link id="favicon" rel="icon" type="image/png" href="logo-hauscrete.png">
 <link id="faviconApple" rel="apple-touch-icon" href="logo-hauscrete.png">
+<!-- RF-643: tipografías del formato de cotización (Montserrat títulos, Inter datos) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <!-- Código QR del SAT en la representación impresa del CFDI -->
@@ -693,6 +697,52 @@
   .pdf-tbl thead{display:table-header-group}   /* el encabezado verde se repite en cada hoja */
   .pdf-tbl tr, .pdf-tbl tr.subrow{page-break-inside:avoid;break-inside:avoid}
   .pdf-top,.pdf-cliente,.pdf-info,.pdf-son,.pdf-tots,.pdf-asesor,.pdf-bottom,.pdf-obs,.pdf-m2{page-break-inside:avoid;break-inside:avoid}
+  /* ===== RF-643: NUEVO DISEÑO DEL FORMATO DE COTIZACIÓN =====
+     Naranja Hebel #FF5A00 (folio, barra del cliente, total y m²), gris carbón #303438
+     (encabezado de la tabla y etiquetas de totales), blanco y gris claro. Montserrat en
+     títulos e Inter en datos. Tabla más limpia, total destacado, observaciones con viñeta.
+     El color de acento cambia solo en factura/OC (azul) y remisión (ámbar). */
+  .pdfdoc{--acc:#FF5A00;--dark:#303438;--gris:#F3F4F6;--pdf-ln:#D5D9DE;
+    font-family:"Inter",Arial,Helvetica,sans-serif;color:var(--dark);font-size:11px;line-height:1.35}
+  .pdfdoc.pdf-factura,.pdfdoc.pdf-oc{--acc:#1C4E80}
+  .pdfdoc.pdf-remision{--acc:#C79A00}
+  .pdfdoc .pdf-num .h,.pdfdoc .pdf-num .n,.pdfdoc .pdf-cliente,.pdfdoc .pdf-tbl th,.pdfdoc .pdf-son>div:first-child,
+  .pdfdoc .pdf-tots span,.pdfdoc .pdf-tots b,.pdfdoc .pdf-m2,.pdfdoc .pdf-emp-n,.pdfdoc .pdf-obs-t{font-family:"Montserrat","Inter",Arial,sans-serif}
+  .pdfdoc .pdf-emp{color:var(--dark);font-size:11.5px;line-height:1.5}
+  .pdfdoc .pdf-emp-n{font-weight:700;font-size:13px;letter-spacing:.04em}
+  .pdfdoc .pdf-num .h{background:var(--acc);color:#fff;border:none;border-radius:5px 5px 0 0;font-size:13px;font-weight:700;letter-spacing:.05em;padding:7px 4px}
+  .pdfdoc .pdf-num .n{background:var(--gris);border:1px solid var(--pdf-ln);border-top:none;border-radius:0 0 5px 5px;font-size:30px;font-weight:800;color:var(--dark);padding:6px 4px}
+  .pdfdoc .pdf-cliente{background:var(--acc);border:none;border-radius:5px 5px 0 0;font-size:13.5px;font-weight:700;padding:8px 13px;margin-top:16px}
+  .pdfdoc .pdf-info{border:1px solid var(--pdf-ln);border-top:none;border-radius:0 0 5px 5px}
+  .pdfdoc .pdf-info>div{padding:10px 13px;line-height:1.8}
+  .pdfdoc .pdf-info .iz{border-right:1px solid var(--pdf-ln)}
+  .pdfdoc .pdf-info .iz .r{grid-template-columns:86px 1fr}
+  .pdfdoc .pdf-info .r span{font-weight:700;color:var(--dark)}
+  .pdfdoc .pdf-intro{margin:16px 0 8px;color:#4A5058}
+  .pdfdoc .pdf-tbl{border:1px solid var(--pdf-ln);font-size:11.5px}
+  .pdfdoc .pdf-tbl th{background:var(--dark);color:#fff;border:1px solid var(--dark);border-right-color:#555B62;padding:8px 9px;font-size:11px;font-weight:700;letter-spacing:.03em}
+  .pdfdoc .pdf-tbl th:last-child{border-right-color:var(--dark)}
+  .pdfdoc .pdf-tbl td{background:#fff;border-right:1px solid var(--pdf-ln);border-bottom:1px solid var(--pdf-ln);padding:7px 9px}
+  .pdfdoc .pdf-tbl tr.alt td{background:var(--gris)}
+  /* el renglón de tarimas / piezas / m² va con el MISMO fondo que su producto
+     (blanco en el primero), para que se lea como parte de él */
+  .pdfdoc .pdf-tbl tr.subrow td{background:#fff;padding-top:7px}
+  .pdfdoc .pdf-tbl tr.subrow.alt td{background:var(--gris)}
+  .pdfdoc .pdf-son{margin-top:14px;gap:24px}
+  .pdfdoc .pdf-son>div:first-child{font-weight:800;font-size:12.5px;color:var(--dark);text-transform:uppercase;line-height:1.45;padding-top:4px}
+  .pdfdoc .pdf-tots span{background:var(--dark);color:#fff;border:1px solid var(--dark);width:112px;text-align:left;padding:6px 11px;font-size:12px;font-weight:700}
+  .pdfdoc .pdf-tots b{border:1px solid var(--pdf-ln);border-left:none;width:152px;padding:6px 11px;font-size:12.5px;font-weight:700;color:var(--dark);background:#fff}
+  .pdfdoc .pdf-tots div+div span{border-top:1px solid #555B62}
+  .pdfdoc .pdf-tots div.tot span,.pdfdoc .pdf-tots div.tot b{background:var(--acc);border-color:var(--acc);color:#fff;font-size:15.5px;font-weight:800;padding:8px 11px}
+  .pdfdoc .pdf-asesor{margin-top:20px;line-height:1.6;color:var(--dark)}
+  .pdfdoc .pdf-bottom{margin-top:16px;gap:30px}
+  .pdfdoc .pdf-obs{line-height:1.55;font-size:11px;color:#3B4148;border-top:1px solid var(--pdf-ln);padding-top:12px}
+  .pdfdoc .pdf-obs-t{font-weight:700;color:var(--dark);margin-bottom:5px;font-size:11.5px}
+  .pdfdoc .pdf-obs ul{list-style:none;margin:0;padding:0}
+  .pdfdoc .pdf-obs li{position:relative;padding-left:15px;margin:0 0 4px}
+  .pdfdoc .pdf-obs li::before{content:"";position:absolute;left:1px;top:.5em;width:6px;height:6px;border-radius:50%;background:var(--acc)}
+  .pdfdoc .pdf-m2{background:#FFF1E8;color:var(--acc);border-left:6px solid var(--acc);border-radius:5px;font-size:18px;font-weight:700;padding:16px 20px;margin-top:26px}
+  .pdfdoc .pdf-m2 b{font-weight:800}
   /* ===== RF-641: LOS CAMPOS SE VEN IGUAL EN TODOS LOS NAVEGADORES =====
      Safari dibujaba los <select> con su estilo nativo (más chicos, redondeados, con
      doble flecha) y quedaban de otro tamaño que los demás campos. Se quita el estilo
@@ -17509,7 +17559,7 @@ function construirDocCot(c){
   // Evitar duplicados: si ya vamos a poner la cuenta seleccionada, se quitan las
   // líneas Banco/Cuenta/CLABE que pudiera traer el texto del domicilio
   if(lineasCta.length) baseLineas = baseLineas.filter(l=>!/^\s*(banco|cuenta|clabe)\s*:/i.test(l));
-  const empLineas = baseLineas.concat(lineasCta).map(l=>esc(l)).join("<br>");
+  const empLineas = baseLineas.concat(lineasCta).map((l,i)=>i===0?`<span class="pdf-emp-n">${esc(l)}</span>`:esc(l)).join("<br>");   // RF-643: el nombre de la empresa en negrita
   const fm = (x,min=2,max=2) => Number(x||0).toLocaleString("es-MX",{minimumFractionDigits:min,maximumFractionDigits:max});
   const fcant = x => Number(x||0).toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:4});
 
@@ -17573,7 +17623,9 @@ function construirDocCot(c){
     }
     return fila;
   }).join("");
-  const obs = (c.obsSel||[]).map(o=>"* "+esc(o)).join("<br>") + (c.notas?"<br>* "+esc(c.notas):"");
+  /* RF-643: observaciones como lista con viñeta (antes "* " al inicio de cada línea) */
+  const obsItems = (c.obsSel||[]).map(o=>esc(o)).concat(c.notas ? [esc(c.notas)] : []);
+  const obs = obsItems.length ? `<ul>${obsItems.map(o=>`<li>${o}</li>`).join("")}</ul>` : "";
   const asesor = p.asesor||"";
   const fa = fichaAsesor(asesor);
   return `<div class="pdfdoc${c._pdfClase?(" "+c._pdfClase):(c._esFactura?" pdf-factura":"")}">
@@ -17614,13 +17666,13 @@ function construirDocCot(c){
         ${(timbradaPDF && t.desc>0.005)?`<div><span>Descuento:</span><b>${fm(t.desc)}</b></div>`:""}
         <div><span>Subtotal:</span><b>${fm(t.imp)}</b></div>
         <div><span>IVA ${c.iva||0}%:</span><b>${fm(t.iva)}</b></div>
-        <div><span>Total:</span><b>${fm(t.tot)}</b></div>
+        <div class="tot"><span>Total:</span><b>${fm(t.tot)}</b></div>
       </div>
     </div>`}
     ${esRemision?"":`<div class="pdf-asesor">ASESOR:<br><b>${esc(asesor.toUpperCase())}</b>${fa&&fa.correo?`<br>${esc(fa.correo)}`:""}${fa&&fa.celular?`<br>${esc(fa.celular)}`:""}</div>`}
     <div class="pdf-bottom">
-      <div class="pdf-obs">Observaciones:<br>${obs}</div>
-      ${(m2>0 && !c._esFactura && !esRemision)?`<div class="pdf-m2">Cotejar m2 cotizados: <b>${fm(m2)}</b></div>`:""}
+      <div class="pdf-obs"><div class="pdf-obs-t">Observaciones:</div>${obs}</div>
+      ${(m2>0 && !c._esFactura && !esRemision)?`<div class="pdf-m2">Cotejar m² cotizados: <b>${fm(m2)}</b></div>`:""}
     </div>
     ${esRemision?`<div class="pdf-firmas">
       <div class="fma" style="text-align:left;padding-top:0">Entrega:<br><b>${esc(asesor.toUpperCase())}</b>${fa&&fa.correo?`<br>${esc(fa.correo)}`:""}${fa&&fa.celular?`<br>${esc(fa.celular)}`:""}</div>
@@ -17727,7 +17779,7 @@ function construirDocOC(o){
       <div class="pdf-tots">
         <div><span>SubTotal:</span><b>${fm(t.imp)}</b></div>
         <div><span>IVA ${o.iva||0}%:</span><b>${fm(t.iva)}</b></div>
-        <div><span>Total:</span><b>${fm(t.tot)}</b></div>
+        <div class="tot"><span>Total:</span><b>${fm(t.tot)}</b></div>
       </div>
     </div>
   </div>`;
@@ -18835,6 +18887,7 @@ async function descargarPDFActual(){
     // en hasta ~1.75 páginas, se escala para que quepa entero en una sola.
     // Cotizaciones muy largas siguen saliendo en varias hojas con cortes limpios.
     let unaHoja = false;
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(_){}   // RF-643: que el PDF salga con Montserrat/Inter
     const worker = html2pdf().set(OPTS).from(host.firstChild).toContainer().then(anclar);
     const canvas = await worker.toCanvas().get("canvas");
     const innerW = esCFDI?196:190, innerH = esCFDI?255:273; // mm útiles (carta para CFDI, A4 para el resto)
