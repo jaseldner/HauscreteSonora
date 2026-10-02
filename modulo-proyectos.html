@@ -724,6 +724,10 @@
   .pdfdoc .pdf-tbl th:last-child{border-right-color:var(--dark)}
   .pdfdoc .pdf-tbl td{background:#fff;border-right:1px solid var(--pdf-ln);border-bottom:1px solid var(--pdf-ln);padding:7px 9px}
   .pdfdoc .pdf-tbl tr.alt td{background:var(--gris)}
+  /* RF-647: borde izquierdo propio de la primera columna (el PDF dibuja los bordes de
+     cada celda y el de la tabla no salía del lado izquierdo) */
+  .pdfdoc .pdf-tbl td:first-child{border-left:1px solid var(--pdf-ln)}
+  .pdfdoc .pdf-tbl th:first-child{border-left:1px solid var(--dark)}
   /* el renglón de tarimas / piezas / m² va con el MISMO fondo que su producto
      (blanco en el primero), para que se lea como parte de él */
   .pdfdoc .pdf-tbl tr.subrow td{background:#fff;padding-top:7px}
