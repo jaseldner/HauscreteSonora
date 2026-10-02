@@ -79,6 +79,20 @@
   .mnu{display:block;width:100%;text-align:left;border:none;border-bottom:1px solid var(--line);
        background:#fff;padding:16px 18px;font-size:17px;font-weight:700;color:var(--navy)}
   .mnu:last-child{border-bottom:none} .mnu:active{background:#EDF3F8}
+  /* RF-641: en el iPhone (Safari) los <select> salían con el estilo nativo —grises,
+     redondeados y de otra altura—. Ahora se ven igual que los demás campos en todos
+     los teléfonos, con una flecha propia. */
+  select:not([multiple]):not([size]){
+    -webkit-appearance:none;-moz-appearance:none;appearance:none;color:var(--ink,#12263A);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1.5 1.5l5.5 5.5 5.5-5.5' fill='none' stroke='%235B6B7F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+    background-repeat:no-repeat !important;background-position:right 14px center !important;background-size:14px 9px !important;
+    padding-right:40px !important;
+  }
+  /* RF-641: botones y campos usan la MISMA letra que la app (si no, algunos navegadores
+     los dibujan con su letra propia y se ven distintos) */
+  button,select,input,textarea{font-family:inherit}
+  input[type=date],input[type=time],input[type=datetime-local]{-webkit-appearance:none;appearance:none;min-height:48px;text-align:left;background:#fff}
+  input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
 </style>
 </head>
 <body>
