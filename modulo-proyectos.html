@@ -18880,6 +18880,8 @@ async function descargarPDFActual(){
   if(host.firstChild && host.firstChild.style) host.firstChild.style.width = "718px";
   const nombre = pdfActual.nombre;
   const esCFDI = /class="cfdi"/.test((pdfActual&&pdfActual.html)||"");   // RF-227: el CFDI cabe en UNA hoja carta
+  await pdfFuentesListas();   // RF-646: la altura se mide YA con la tipografía final
+  const altoDocPDF = Math.ceil((host.firstChild && (host.firstChild.scrollHeight || host.firstChild.offsetHeight)) || 1100) + 4;
   // html2canvas RECORTA el contenido si el host está fuera de pantalla (left:-10000px):
   // durante la captura lo colocamos en 0,0 DETRÁS de la app (z-index negativo) y al
   // terminar lo regresamos. Esto corrige los PDF que salían mutilados del lado izquierdo.
@@ -18895,7 +18897,11 @@ async function descargarPDFActual(){
       margin: [12, 10, 12, 10],
       filename: nombre,
       image: {type:"jpeg", quality:0.98},
-      html2canvas: {scale:2, backgroundColor:"#ffffff"},
+      /* RF-646: se le da a la captura la ALTURA COMPLETA del documento. Sin esto, algunos
+         navegadores (Safari) recortan lo que queda más abajo de la altura de la ventana y
+         el PDF salía cortado en las observaciones. No se fuerza el ancho ni el scroll
+         (eso desfasaba el recorte a la izquierda, ver la nota de abajo). */
+      html2canvas: {scale:2, backgroundColor:"#ffffff", height: altoDocPDF, windowHeight: Math.max(window.innerHeight||0, altoDocPDF + 60)},
       jsPDF: {unit:"mm", format: esCFDI?"letter":"a4", orientation:"portrait"},
       pagebreak: {mode:["css","legacy"], avoid:["tr",".pdf-son",".pdf-tots",".pdf-asesor",".pdf-bottom",".pdf-info",".pdf-top",".pdf-cliente"]}
     };
