@@ -673,6 +673,54 @@
   .cfdi-sello .v{font-size:6px;line-height:1.2;padding:3px 5px;word-break:break-all;font-family:"Courier New",monospace}
   .cfdi-leyenda{text-align:center;font-weight:700;font-size:8px;margin-top:3px}
   .cfdi-top,.cfdi table,.cfdi-pie,.cfdi-sello{page-break-inside:avoid;break-inside:avoid}
+  /* ===== RF-649: NUEVO FORMATO DEL CFDI (factura timbrada) ===== */
+  .cfdi .cfdi2{--acc:#FF5A00;--dark:#303438;--gris:#F3F4F6;--ln:#D5D9DE;font-family:"Inter",Arial,Helvetica,sans-serif;color:var(--dark);font-size:8.5px;line-height:1.35}
+  .cfdi .cfdi2 *{box-sizing:border-box}
+  .cfdi .cfdi2 .c2-tit,.cfdi .cfdi2 .c2-fh,.cfdi .cfdi2 .c2-fn,.cfdi .cfdi2 .c2-emi-n,.cfdi .cfdi2 .c2-rec,.cfdi .cfdi2 .c2-conc th,
+  .cfdi .cfdi2 .c2-t span,.cfdi .cfdi2 .c2-t b,.cfdi .cfdi2 .c2-sello .t,.cfdi .cfdi2 .c2-leyenda span{font-family:"Montserrat","Inter",Arial,sans-serif}
+  .cfdi .cfdi2 .c2-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:7px}
+  .cfdi .cfdi2 .c2-logo{width:118px;flex:none;text-align:center}
+  .cfdi .cfdi2 .c2-logo img{max-width:100%;max-height:64px;width:auto;height:auto}
+  .cfdi .cfdi2 .c2-emisor{flex:1;text-align:center;font-size:9px;line-height:1.4;padding-top:6px}
+  .cfdi .cfdi2 .c2-emi-n{font-weight:800;font-size:11.5px;letter-spacing:.04em;margin-bottom:1px}
+  .cfdi .cfdi2 .c2-folio{width:180px;flex:none;text-align:center}
+  .cfdi .cfdi2 .c2-tit{font-size:22px;font-weight:800;letter-spacing:.03em;line-height:1;margin-bottom:4px}
+  .cfdi .cfdi2 .c2-fh{background:var(--acc);color:#fff;font-weight:700;font-size:9.5px;padding:3px;border-radius:5px 5px 0 0}
+  .cfdi .cfdi2 .c2-fn{font-size:16px;font-weight:800;padding:2px;border:1px solid var(--ln);border-top:none;border-radius:0 0 5px 5px;background:#fff}
+  .cfdi .cfdi2 .c2-bc{margin-top:3px}
+  .cfdi .cfdi2 .c2-bc img{width:100%;height:26px;display:block}
+  .cfdi .cfdi2 .c2-bc span{font-size:7px;letter-spacing:.08em}
+  .cfdi .cfdi2 .c2-card{display:grid;background:var(--gris);border:1px solid #E3E6EA;border-radius:6px;padding:5px 0;margin-bottom:5px}
+  .cfdi .cfdi2 .c2-g5{grid-template-columns:1.25fr 1fr .85fr 1.1fr .8fr}
+  .cfdi .cfdi2 .c2-g3{grid-template-columns:1.45fr 1.15fr .6fr}
+  .cfdi .cfdi2 .c2-g7{grid-template-columns:.6fr .75fr 1.05fr .75fr .75fr .7fr .75fr}
+  .cfdi .cfdi2 .c2-cel{padding:1px 9px;border-left:1px solid var(--ln);min-width:0}
+  .cfdi .cfdi2 .c2-cel:first-child{border-left:none}
+  .cfdi .cfdi2 .c2-l{font-weight:700;font-size:8px;margin-bottom:2px}
+  .cfdi .cfdi2 .c2-v{font-size:8.5px;word-break:break-word;color:#3B4148}
+  .cfdi .cfdi2 .c2-rec{color:var(--acc);font-weight:800;font-size:10px;margin-bottom:2px}
+  .cfdi .cfdi2 table.c2-conc{width:100%;min-width:0;border-collapse:collapse;table-layout:fixed;margin:2px 0 6px}
+  .cfdi .cfdi2 .c2-conc th{background:var(--dark);color:#fff;font-size:8px;font-weight:700;text-align:center;padding:4px 5px;border:1px solid var(--dark)}
+  .cfdi .cfdi2 .c2-conc td{font-size:8px;padding:3px 5px;border:1px solid var(--ln);text-align:center;vertical-align:middle;word-break:break-word;background:#fff}
+  .cfdi .cfdi2 .c2-conc th.desc,.cfdi .cfdi2 .c2-conc td.desc{text-align:left}
+  .cfdi .cfdi2 .c2-conc th.n,.cfdi .cfdi2 .c2-conc td.n{text-align:right}
+  .cfdi .cfdi2 .c2-pie{display:flex;gap:12px;align-items:flex-start;margin:4px 0 6px}
+  .cfdi .cfdi2 .c2-qr{width:98px;flex:none}
+  .cfdi .cfdi2 .c2-qr img{width:98px;height:98px;display:block;image-rendering:pixelated}
+  /* totales COMPACTOS (más chicos que en la cotización) */
+  .cfdi .cfdi2 .c2-tots{margin-left:auto;width:220px}
+  .cfdi .cfdi2 .c2-t{display:flex;justify-content:space-between;align-items:center;background:var(--gris);border-radius:4px;padding:3px 9px;margin-bottom:3px;font-size:10px}
+  .cfdi .cfdi2 .c2-t span{font-weight:700}
+  .cfdi .cfdi2 .c2-t b{font-weight:800}
+  .cfdi .cfdi2 .c2-tot{background:var(--acc);color:#fff;font-size:12px;padding:4px 9px}
+  /* sellos en letra MUY chica para dejar espacio a los conceptos */
+  .cfdi .cfdi2 .c2-sello{border:1px solid #E3E6EA;border-radius:5px;margin-bottom:3px;overflow:hidden}
+  .cfdi .cfdi2 .c2-sello .t{background:var(--dark);color:#fff;font-weight:700;font-size:7px;padding:2px 7px}
+  .cfdi .cfdi2 .c2-sello .v{font-size:5px;line-height:1.2;padding:2px 7px;word-break:break-all;font-family:"Courier New",monospace;color:#3B4148}
+  .cfdi .cfdi2 .c2-leyenda{display:flex;align-items:center;gap:10px;margin:5px 0 4px;font-size:8px;font-weight:700}
+  .cfdi .cfdi2 .c2-leyenda::before,.cfdi .cfdi2 .c2-leyenda::after{content:"";flex:1;border-top:1px solid var(--ln)}
+  .cfdi .cfdi2 .c2-barra{height:6px;background:var(--acc);border-radius:2px}
+  .cfdi .cfdi2 .c2-top,.cfdi .cfdi2 .c2-card,.cfdi .cfdi2 .c2-pie,.cfdi .cfdi2 .c2-sello{page-break-inside:avoid;break-inside:avoid}
   .pdfdoc.pdf-factura .pdf-tbl th{background:#1C4E80}
   .pdfdoc.pdf-factura .pdf-tbl tr.alt td{background:#DCE7F5}
   .pdf-tbl tr.subrow td{padding-top:0}
@@ -18055,83 +18103,77 @@ function construirDocCFDI(pf){
   const regRec = cfdi.receptor.regimen
     ? cfdi.receptor.regimen+" - "+((REG_FISCAL.find(r=>r[0]===cfdi.receptor.regimen)||[])[1]||"")
     : "";
-  return `<div class="cfdi">
-    <div class="cfdi-top">
-      <div class="cfdi-logo">${logo.img?`<img src="${logo.img}" alt="logo">`:""}${logosProveedorDoc(proyDe(pf.proyectoId)||{}, pf.partidas).map(l=>`<img src="${l.img}" alt="logo" style="max-height:40px;margin-top:6px">`).join("")}</div>
-      <div class="cfdi-emisor">
-        <b>${esc(cfdi.emisor.nombre||"")}</b><br>
+  /* RF-649: nuevo formato de la representación impresa del CFDI (mismo estilo que la
+     cotización: naranja Hebel, gris carbón, tarjetas gris claro, Montserrat/Inter).
+     Totales compactos y sellos en letra muy chica para que facturas con muchos
+     conceptos quepan en UNA hoja. El contenedor conserva class="cfdi" (así la descarga
+     lo reconoce como CFDI: hoja carta y una sola página). */
+  const fila = (pares) => pares.map(([l,v])=>`<div class="c2-cel"><div class="c2-l">${l}</div><div class="c2-v">${v}</div></div>`).join("");
+  return `<div class="cfdi"><div class="cfdi2">
+    <div class="c2-top">
+      <div class="c2-logo">${logo.img?`<img src="${logo.img}" alt="logo">`:""}${logosProveedorDoc(proyDe(pf.proyectoId)||{}, pf.partidas).map(l=>`<img src="${l.img}" alt="logo" style="max-height:34px;margin-top:4px">`).join("")}</div>
+      <div class="c2-emisor">
+        <div class="c2-emi-n">${esc(cfdi.emisor.nombre||"")}</div>
         ${domLineas.map(esc).join("<br>")}${domLineas.length?"<br>":""}
         R.F.C. ${esc(cfdi.emisor.rfc||"")}<br>
         ${esc(cfdi.emisor.regimen||"")}<br>
         C.P. ${esc(cfdi.lugarExpedicion||"")}
       </div>
-      <div class="cfdi-folio">
-        <div class="h">Serie y folio</div>
-        <div class="n">${esc(serieFolio)}</div>
-        ${bc?`<div class="bc"><img src="${bc}" alt="${esc(serieFolio)}"><span>${esc(serieFolio)}</span></div>`:""}
+      <div class="c2-folio">
+        <div class="c2-tit">FACTURA</div>
+        <div class="c2-fh">Serie y folio</div>
+        <div class="c2-fn">${esc(serieFolio)}</div>
+        ${bc?`<div class="c2-bc"><img src="${bc}" alt="${esc(serieFolio)}"><span>${esc(serieFolio)}</span></div>`:""}
       </div>
     </div>
 
-    <table>
-      <colgroup><col style="width:24%"><col style="width:19%"><col style="width:13%"><col style="width:23%"><col style="width:21%"></colgroup>
-      <tr><th>UUID:</th><th>No. serie del certificado del SAT</th><th>Fecha timbrado</th><th>No. serie del certificado del emisor</th><th>RfcProvCertif</th></tr>
-      <tr>
-        <td>${esc(cfdi.uuid||"")}</td>
-        <td>${esc(cfdi.noCertSAT||"")}</td>
-        <td>${esc(fmtFecha(cfdi.fechaTimbrado))}</td>
-        <td>${esc(cfdi.noCertEmisor||"")}</td>
-        <td>${esc(cfdi.rfcProvCertif||"")}</td>
-      </tr>
-    </table>
+    <div class="c2-card c2-g5">${fila([
+      ["UUID:", esc(cfdi.uuid||"")],
+      ["No. serie del certificado del SAT", esc(cfdi.noCertSAT||"")],
+      ["Fecha timbrado", esc(fmtFecha(cfdi.fechaTimbrado))],
+      ["No. serie del certificado del emisor", esc(cfdi.noCertEmisor||"")],
+      ["RfcProvCertif", esc(cfdi.rfcProvCertif||"")]])}</div>
 
-    <table>
-      <colgroup><col style="width:47%"><col style="width:38%"><col style="width:15%"></colgroup>
-      <tr><th>Receptor de CFDI</th><th>Clave de Régimen Fiscal</th><th>Expedido en</th></tr>
-      <tr>
-        <td>RFC: ${esc(cfdi.receptor.rfc||"")}<br>${esc(cfdi.receptor.nombre||"")}</td>
-        <td>${esc(regRec)}</td>
-        <td>${esc(cfdi.receptor.domicilio||cfdi.lugarExpedicion||"")}</td>
-      </tr>
-    </table>
+    <div class="c2-card c2-g3">
+      <div class="c2-cel"><div class="c2-rec">Receptor de CFDI</div>
+        <div class="c2-v"><b>RFC:</b> ${esc(cfdi.receptor.rfc||"")}<br>${esc(cfdi.receptor.nombre||"")}</div></div>
+      ${fila([["Clave de Régimen Fiscal", esc(regRec)], ["Expedido en", esc(cfdi.receptor.domicilio||cfdi.lugarExpedicion||"")]])}
+    </div>
 
-    <table>
-      <colgroup><col style="width:11%"><col style="width:12%"><col style="width:17%"><col style="width:15%"><col style="width:16%"><col style="width:14%"><col style="width:15%"></colgroup>
-      <tr><th>Uso Cfdi</th><th>Tipo de comprobante</th><th>Fecha de emisión</th><th>Método pago</th><th>Forma de pago</th><th>Condicion</th><th>Moneda</th></tr>
-      <tr>
-        <td>${esc(cfdi.receptor.usoCfdi||"")}</td>
-        <td>${esc(cfdi.tipoComprobante||"")}</td>
-        <td>${esc(fmtFecha(cfdi.fecha))}</td>
-        <td>${esc(cfdi.metodoPago||"")}</td>
-        <td>${esc(cfdi.formaPago||"")}</td>
-        <td>${esc(cfdi.condiciones||"")}</td>
-        <td>${esc(cfdi.moneda||"")} T.C. ${esc(cfdi.tipoCambio||"1")}</td>
-      </tr>
-    </table>
+    <div class="c2-card c2-g7">${fila([
+      ["Uso Cfdi", esc(cfdi.receptor.usoCfdi||"")],
+      ["Tipo de comprobante", esc(cfdi.tipoComprobante||"")],
+      ["Fecha de emisión", esc(fmtFecha(cfdi.fecha))],
+      ["Método pago", esc(cfdi.metodoPago||"")],
+      ["Forma de pago", esc(cfdi.formaPago||"")],
+      ["Condicion", esc(cfdi.condiciones||"")],
+      ["Moneda", esc(cfdi.moneda||"")+" T.C. "+esc(cfdi.tipoCambio||"1")]])}</div>
 
-    <table class="cfdi-conc">
-      <colgroup><col style="width:8%"><col style="width:12%"><col style="width:15%"><col style="width:12%"><col style="width:29%"><col style="width:12%"><col style="width:12%"></colgroup>
-      <tr><th>Cant</th><th>Unidad</th><th>No Identificación</th><th>C.ProdServ</th><th class="desc">Descripción</th><th>Precio u.</th><th>Importe</th></tr>
+    <table class="c2-conc">
+      <colgroup><col style="width:7%"><col style="width:12%"><col style="width:14%"><col style="width:11%"><col style="width:32%"><col style="width:12%"><col style="width:12%"></colgroup>
+      <tr><th>Cant</th><th>Unidad</th><th>No Identificación</th><th>C.ProdServ</th><th class="desc">Descripción</th><th class="n">Precio u.</th><th class="n">Importe</th></tr>
       ${filas}
     </table>
 
-    <div class="cfdi-pie">
-      <div class="cfdi-qr">${qr?`<img src="${qr}" alt="QR SAT">`:""}</div>
-      <div class="cfdi-tots">
-        ${cfdi.descuento>0.005?`<div><span>Descuento:</span><b>$${fm(cfdi.descuento)}</b></div>`:""}
-        <div><span>Subtotal:</span><b>$${fm(cfdi.subtotal)}</b></div>
-        <div><span>IVA ${cfdi.tasaIva||16}%:</span><b>$${fm(cfdi.iva)}</b></div>
-        <div><span>Total:</span><b>$${fm(cfdi.total)}</b></div>
+    <div class="c2-pie">
+      <div class="c2-qr">${qr?`<img src="${qr}" alt="QR SAT">`:""}</div>
+      <div class="c2-tots">
+        ${cfdi.descuento>0.005?`<div class="c2-t"><span>Descuento:</span><b>$${fm(cfdi.descuento)}</b></div>`:""}
+        <div class="c2-t"><span>Subtotal:</span><b>$${fm(cfdi.subtotal)}</b></div>
+        <div class="c2-t"><span>IVA ${cfdi.tasaIva||16}%:</span><b>$${fm(cfdi.iva)}</b></div>
+        <div class="c2-t c2-tot"><span>Total:</span><b>$${fm(cfdi.total)}</b></div>
       </div>
     </div>
 
-    <div class="cfdi-sello"><div class="t">Cadena Original del complemento de certificación digital del SAT</div>
+    <div class="c2-sello"><div class="t">Cadena Original del complemento de certificación digital del SAT</div>
       <div class="v">${esc(cfdi.cadenaOriginal||"")}</div></div>
-    <div class="cfdi-sello"><div class="t">Sello digital del CFDI</div>
+    <div class="c2-sello"><div class="t">Sello digital del CFDI</div>
       <div class="v">${esc(cfdi.selloCFD||"")}</div></div>
-    <div class="cfdi-sello"><div class="t">Sello del Sat</div>
+    <div class="c2-sello"><div class="t">Sello del Sat</div>
       <div class="v">${esc(cfdi.selloSAT||"")}</div></div>
-    <div class="cfdi-leyenda">Este documento es una representación impresa de un CFDI ${esc(cfdi.version||"4.0")}</div>
-  </div>`;
+    <div class="c2-leyenda"><span>Este documento es una representación impresa de un CFDI ${esc(cfdi.version||"4.0")}</span></div>
+    <div class="c2-barra"></div>
+  </div></div>`;
 }
 
 /* ---- Timbrado del CFDI ----
