@@ -993,6 +993,8 @@
         <div class="fld" style="max-width:130px"><label for="pfFAnio">Año</label><select id="pfFAnio"></select></div>
         <div class="fld" style="max-width:150px"><label for="pfFMes">Mes</label><select id="pfFMes"></select></div>
         <div class="fld" style="flex:1;min-width:220px"><label for="pfFBuscar">Buscar</label><input id="pfFBuscar" placeholder="🔍 folio, cliente, proyecto, vendedor…" autocomplete="off"></div>
+        <!-- RF-648: factura que NO sale de una cotización ni necesita proyecto -->
+        <button class="btn btn-accent" id="btnNuevaFactSP" type="button" style="align-self:flex-end">+ Nueva factura sin proyecto</button>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -3133,6 +3135,8 @@
             </tr></thead>
             <tbody id="pfPartBody"></tbody>
           </table>
+          <!-- RF-648: en la factura sin proyecto las partidas se capturan aquí -->
+          <button class="btn btn-ghost" id="btnPfAddPart" type="button" hidden style="margin-top:8px">+ Agregar partida</button>
         </div>
         <div class="tot-box">
           <div><span>Subtotal</span><b id="pfSub">$0.00</b></div>
@@ -6488,7 +6492,7 @@ function filaPartida(pt, i, doc, onRecalc){
      los datos guardados (precio de lista + %) y los totales/CFDI no cambian. */
   const esPrefac = (doc===draftPf);
   const _neto = Math.round(((Number(pt.precio)||0)*(1-(Number(pt.desc)||0)/100))*100)/100;
-  const _roPF = esPrefac ? 'readonly tabindex="-1" style="background:#F2F5F8;color:var(--steel);pointer-events:none"' : "";
+  const _roPF = (esPrefac && !doc.sinProyecto) ?    /* RF-648: en la factura sin proyecto el precio sí se captura */ 'readonly tabindex="-1" style="background:#F2F5F8;color:var(--steel);pointer-events:none"' : "";
   const unidades = UNIDADES.includes(pt.unidad)||!pt.unidad ? UNIDADES : [pt.unidad, ...UNIDADES];
   tr.innerHTML = `
     <td><input data-f="codigo" data-ac="prod" autocomplete="off" value="${esc(pt.codigo||"")}" placeholder="BL4154061-HEBEL"></td>
@@ -6518,7 +6522,7 @@ function filaPartida(pt, i, doc, onRecalc){
             if(typeof esProvHauscrete==="function" && esProvHauscrete(provOC)) pv = 0;
             else { const c = (typeof costoProveedor==="function") ? costoProveedor(provOC, inp.value) : null; pv = (c!=null) ? Number(c.toFixed(2)) : 0; }
           } else {
-            pv = precioCotizacion(prod, inp.value, draftCot);   // RF-617
+            pv = precioCotizacion(prod, inp.value, doc===draftPf ? draftPf : draftCot);   // RF-617 · RF-648: en la factura, la categoría del cliente de la factura
           }
           pt.descripcion = prod.descripcion;
           pt.unidad = prod.unidad;
@@ -18148,7 +18152,7 @@ function actualizarBotonTimbrar(){
     // RF-225: el título muestra el # de prefactura y, si ya está timbrada, también el folio de la factura
     $("pfTitle").textContent = timbrada
       ? ("PF-"+String(draftPf.folio).padStart(3,"0")+" · Factura "+(draftPf.serie||"(timbrada)"))
-      : ("Prefactura PF-"+String(draftPf.folio).padStart(3,"0"));
+      : (draftPf.folio==null ? "Nueva factura sin proyecto" : ("Prefactura PF-"+String(draftPf.folio).padStart(3,"0")+(draftPf.sinProyecto?" · sin proyecto":"")));   // RF-648
     $("pfIds").textContent = timbrada ? "Timbrada" : (draftPf.estatus||"Por timbrar");
   }
   b.textContent = timbrada ? "🧾 Ver factura timbrada" : "⚡ Timbrar factura";
@@ -18742,6 +18746,12 @@ async function cancelarREP(pf, rep){
 
 $("btnPfTimbrar").addEventListener("click", ()=>{
   if(!draftPf){ toast("Abre una prefactura."); return; }
+  /* RF-648: una factura sin proyecto que aún no se guarda se da de alta antes de timbrar */
+  if(draftPf.sinProyecto && !esTimbrada(draftPf)){
+    if($("pfClienteFactura")) draftPf.clienteFactura = $("pfClienteFactura").value.trim();
+    if(!pfSinProyAlta()) return;
+    renderPfPartidas();
+  }
   // RF-223: al ver una timbrada, si tiene PDF adjunto se muestra; si trae CFDI, el fiscal; si no, el machote
   if(esTimbrada(draftPf)){
     /* RF-416: el formato oficial de la factura es el MACHOTE FISCAL DEL SISTEMA
@@ -19121,7 +19131,7 @@ function openPrefactura(id){
   const origen = esSuc ? "Sucursal" : "Matriz";
   const domFiscal = (esSuc ? state.fiscalSucursal : state.fiscalMatriz)||"";
   $("pfInfo").innerHTML = `
-    <b>Cotización:</b> ${esc(String(pf.cotFolio||"—"))} &nbsp; <b>Proyecto:</b> ${esc(p.numHebel||"")} - ${esc(p.nombre||"—")}<br>
+    <b>Cotización:</b> ${esc(String(pf.cotFolio||"—"))} &nbsp; <b>Proyecto:</b> ${pf.proyectoId ? (esc(p.numHebel||"")+" - "+esc(p.nombre||"—")) : `<span style="color:var(--steel)">sin proyecto</span>`}<br>
     <b>Cliente:</b> ${esc(cliFactura(pf)||"—")}${(pf.clienteFactura&&pf.clienteFactura.trim()&&pf.clienteFactura.trim()!==(p.cliente||""))?` <span style="color:var(--accent);font-size:12px">(proyecto: ${esc(p.cliente||"—")})</span>`:""} &nbsp; <b>Creada:</b> ${fmtDT(pf.creado)} · ${esc(iniciales(pf.usuario)||"")}${(pf.fecha && pf.fecha!==String(pf.creado||"").slice(0,10))?` &nbsp; <b>Fecha de emisión:</b> <span style="color:#1C4E80;font-weight:800">${fmtD(pf.fecha)}</span>`:""}<br>
     <b>Facturar desde:</b> ${origen}${domFiscal?`<br><span style="color:var(--steel);font-size:12px;white-space:pre-line">${esc(domFiscal)}</span>`:`<span style="color:var(--st-perdido);font-size:12px"> — captura el domicilio fiscal en Ajustes → Datos empresa</span>`}`+
     // RF-274: cuando ya está timbrada, mostrar arriba el FOLIO de la factura timbrada
@@ -19195,15 +19205,60 @@ function openPrefactura(id){
   $("ovPrefac").classList.add("open");
 }
 
+/* ===== RF-648: FACTURA SIN PROYECTO =====
+   Para facturar algo que no salió de una cotización (venta suelta, servicio, etc.) sin
+   tener que inventar un proyecto. Se elige el cliente / razón social, se capturan las
+   partidas (con el buscador de productos o a mano) y se guarda y timbra como cualquier
+   factura. No se agrega al estado hasta guardarla (si se cancela, no queda basura). */
+function pfSinProyNueva(){
+  if(!permisos().subirFactura){ toast("Tu perfil no permite facturar."); return; }
+  const pf = {
+    id: Date.now(), folio: null, cotId: null, cotFolio: null, proyectoId: null, sinProyecto: true,
+    creado: ahora(), fecha: hoy(), usuario: state.usuarioActual||"",
+    estatus: "Por timbrar", moneda: "MXN", iva: 16, origen: haySucursal() ? "sucursal" : "matriz", clienteFactura: "",   // igual que las cotizaciones nuevas
+    partidas: [{codigo:"", descripcion:"", unidad:"", cantidad:"", precio:"", desc:0, tipo:""}],
+    remisiones: []
+  };
+  state.prefacturas = state.prefacturas||[];
+  state.prefacturas.push(pf);          // se abre con la función de siempre…
+  openPrefactura(pf.id);
+  state.prefacturas = state.prefacturas.filter(f=>f.id!==pf.id);   // …y se retira hasta que se guarde
+  setTimeout(()=>{ const c = $("pfClienteFactura"); if(c) c.focus(); }, 80);
+}
+function pfSinProyAlta(){
+  if((state.prefacturas||[]).some(f=>f.id===draftPf.id)) return true;   // ya estaba dada de alta
+  const cli = String(draftPf.clienteFactura||"").trim();
+  if(!cli){ toast("Escribe o elige el cliente / razón social a facturar."); if($("pfClienteFactura")) $("pfClienteFactura").focus(); return false; }
+  const buenas = draftPf.partidas.filter(p=>String(p.descripcion||"").trim() && Number(p.cantidad)>0 && Number(p.precio)>0);
+  if(!buenas.length){ toast("Agrega al menos una partida con descripción, cantidad y precio."); return false; }
+  draftPf.partidas = buenas;
+  draftPf.folio = Math.max(Number(state.nextPrefactura)||1, (state.prefacturas||[]).reduce((m,f)=>Math.max(m,Number(f.folio)||0),0)+1);
+  state.prefacturas = state.prefacturas||[];
+  state.prefacturas.push(JSON.parse(JSON.stringify(draftPf)));
+  state.nextPrefactura = draftPf.folio+1;
+  persist();
+  toast("Factura PF-"+String(draftPf.folio).padStart(3,"0")+" creada sin proyecto — por timbrar.");
+  return true;
+}
+if($("btnNuevaFactSP")) $("btnNuevaFactSP").addEventListener("click", pfSinProyNueva);
+if($("btnPfAddPart")) $("btnPfAddPart").addEventListener("click", ()=>{
+  if(!draftPf) return;
+  draftPf.partidas.push({codigo:"", descripcion:"", unidad:"", cantidad:"", precio:"", desc:0, tipo:""});
+  renderPfPartidas();
+  const filas = $("pfPartBody").querySelectorAll("tr"); const ult = filas[filas.length-1];
+  if(ult){ const c = ult.querySelector('[data-f="codigo"]'); if(c) c.focus(); }
+});
 function renderPfPartidas(){
   const tb = $("pfPartBody");
   tb.innerHTML = "";
   const ro = facturaSoloLectura() || esTimbrada(draftPf);   // RF-135/226: asesor ni factura timbrada editan las partidas
+  if($("btnPfAddPart")) $("btnPfAddPart").hidden = !(draftPf.sinProyecto && !ro);   // RF-648
   draftPf.partidas.forEach((pt,i)=>{
     const tr = filaPartida(pt, i, draftPf, renderTotPf);
     // En la prefactura la DESCRIPCIÓN no se modifica (viene tal cual de la
     // cotización); aquí solo se ajustan cantidades para facturar por partes.
-    const inpDesc = tr.querySelector('[data-f="descripcion"]');
+    // RF-648: en la factura SIN PROYECTO no hay cotización: la descripción sí se escribe.
+    const inpDesc = draftPf.sinProyecto ? null : tr.querySelector('[data-f="descripcion"]');
     if(inpDesc){
       inpDesc.readOnly = true; inpDesc.tabIndex = -1;
       inpDesc.style.background = "#F2F5F8"; inpDesc.style.color = "var(--steel)";
@@ -19298,6 +19353,7 @@ $("btnGuardarPf").addEventListener("click", ()=>{
   // RF-224: razón social a facturar (si es distinta a la del proyecto)
   if($("pfClienteFactura")) draftPf.clienteFactura = $("pfClienteFactura").value.trim();
   if($("pfUsoCfdi")){ draftPf.usoCfdi=$("pfUsoCfdi").value; draftPf.metodoPago=$("pfMetodoPago").value; draftPf.formaPago=$("pfFormaPago").value; }   // RF-312
+  if(draftPf.sinProyecto && !pfSinProyAlta()) return;   // RF-648: la primera vez se da de alta (valida ANTES de limpiar renglones)
   draftPf.partidas = draftPf.partidas.filter(p=>String(p.descripcion||"").trim()||Number(p.cantidad)||Number(p.precio));
   const i = (state.prefacturas||[]).findIndex(f=>f.id===draftPf.id);
   if(i>-1) state.prefacturas[i] = JSON.parse(JSON.stringify(draftPf));
